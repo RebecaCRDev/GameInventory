@@ -45,13 +45,26 @@
         <div class="collapse navbar-collapse" id="navbarNavDropdown">
           <ul class="navbar-nav ms-lg-auto">
             <li class="nav-item">
-              <a class="nav-link {% if vista == 'activos' %}active{% endif %}" aria-current="page" href="/">Activos</a>
+              <a
+                class="nav-link {% if vista == 'activos' %}active{% endif %}"
+                aria-current="page"
+                href="/"
+                >Activos</a
+              >
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if vista == 'inactivos' %}active{% endif %}" href="/juegos/inactivos">Inactivos</a>
+              <a
+                class="nav-link {% if vista == 'inactivos' %}active{% endif %}"
+                href="/juegos/inactivos"
+                >Inactivos</a
+              >
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if vista == 'todos' %}active{% endif %}" href="/juegos/todos">Todos</a>
+              <a
+                class="nav-link {% if vista == 'todos' %}active{% endif %}"
+                href="/juegos/todos"
+                >Todos</a
+              >
             </li>
           </ul>
         </div>
@@ -62,13 +75,10 @@
       <div class="container">
         <h1 class="text-center mb-4">Gestión de Videojuegos</h1>
         <p class="lead text-center mb-5">
-          {% if vista == 'inactivos' %}
-            Videojuegos inactivos (puedes reactivarlos con el botón de power).
-          {% elif vista == 'todos' %}
-            Todos los videojuegos (activos e inactivos).
-          {% else %}
-            Inventario de videojuegos activos.
-          {% endif %}
+          {% if vista == 'inactivos' %} Videojuegos inactivos (puedes
+          reactivarlos con el botón de power). {% elif vista == 'todos' %} Todos
+          los videojuegos (activos e inactivos). {% else %} Inventario de
+          videojuegos activos. {% endif %}
         </p>
       </div>
 
@@ -104,44 +114,53 @@
             </thead>
             <tbody>
               {% if juegos|length == 0 %}
-                <tr>
-                  <td colspan="9" class="text-center text-muted py-4">
-                    No hay videojuegos para mostrar.
-                  </td>
-                </tr>
-              {% else %}
-                {% for j in juegos %}
-                  <tr>
-                    <td>{{ j.id }}</td>
-                    <td>{{ j.codigo or '' }}</td>
-                    <td>{{ j.titulo }}</td>
-                    <td>{{ j.plataforma }}</td>
-                    <td>{{ j.genero or '' }}</td>
-                    <td class="text-end">{{ "%.2f"|format(j.precio) }} €</td>
-                    <td class="text-end">{{ j.stock }}</td>
-                    <td>
-                      {% if j.estado == 1 %}
-                        <span class="badge bg-success">Activo</span>
-                      {% else %}
-                        <span class="badge bg-secondary">Inactivo</span>
-                      {% endif %}
-                    </td>
-                    <td class="text-end">
-                      <a class="btn btn-sm btn-warning" href="/juegos/editar/{{ j.id }}">
-                        <i class="bi bi-pencil-square"></i>
-                      </a>
+              <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                  No hay videojuegos para mostrar.
+                </td>
+              </tr>
+              {% else %} {% for j in juegos %}
+              <tr>
+                <td>{{ j.id }}</td>
+                <td>{{ j.codigo or '' }}</td>
+                <td>{{ j.titulo }}</td>
+                <td>{{ j.plataforma }}</td>
+                <td>{{ j.genero or '' }}</td>
+                <td class="text-end">{{ "%.2f"|format(j.precio) }} €</td>
+                <td class="text-end">{{ j.stock }}</td>
+                <td>
+                  {% if j.estado == 1 %}
+                  <span class="badge bg-success">Activo</span>
+                  {% else %}
+                  <span class="badge bg-secondary">Inactivo</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a
+                    class="btn btn-sm btn-warning"
+                    href="/juegos/editar/{{ j.id }}"
+                  >
+                    <i class="bi bi-pencil-square"></i>
+                  </a>
 
-                      <button class="btn btn-sm btn-secondary btn-toggle" data-id="{{ j.id }}" type="button">
-                        <i class="bi bi-power"></i>
-                      </button>
+                  <button
+                    class="btn btn-sm btn-secondary btn-toggle"
+                    data-id="{{ j.id }}"
+                    type="button"
+                  >
+                    <i class="bi bi-power"></i>
+                  </button>
 
-                      <a class="btn btn-sm btn-danger" href="#" data-id="{{ j.id }}">
-                        <i class="bi bi-trash"></i>
-                      </a>
-                    </td>
-                  </tr>
-                {% endfor %}
-              {% endif %}
+                  <a
+                    class="btn btn-sm btn-danger"
+                    href="#"
+                    data-id="{{ j.id }}"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %} {% endif %}
             </tbody>
           </table>
         </div>
@@ -155,27 +174,49 @@
     </footer>
 
     <!-- Modal de Confirmación de Eliminación -->
-    <div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
+    <div
+      class="modal fade"
+      id="modalEliminar"
+      tabindex="-1"
+      aria-labelledby="modalEliminarLabel"
+      aria-hidden="true"
+    >
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header bg-danger text-white">
             <h5 class="modal-title" id="modalEliminarLabel">
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar
+              Eliminación
             </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
           </div>
           <div class="modal-body">
             <p class="mb-0">
               <i class="bi bi-question-circle me-2"></i>
               ¿Está seguro que desea eliminar este videojuego?
             </p>
-            <p class="text-muted small mb-0 mt-2">Esta acción no se puede deshacer.</p>
+            <p class="text-muted small mb-0 mt-2">
+              Esta acción no se puede deshacer.
+            </p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
               <i class="bi bi-x-circle me-1"></i>Cancelar
             </button>
-            <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">
+            <button
+              type="button"
+              class="btn btn-danger"
+              id="btnConfirmarEliminar"
+            >
               <i class="bi bi-trash me-1"></i>Eliminar
             </button>
           </div>
@@ -191,48 +232,55 @@
 
     <script>
       let juegoIdEliminar = null;
-      const modalEliminar = new bootstrap.Modal(document.getElementById('modalEliminar'));
+      const modalEliminar = new bootstrap.Modal(
+        document.getElementById("modalEliminar")
+      );
 
-      document.addEventListener('click', function(e) {
-        const btnDelete = e.target.closest('.btn-danger[data-id]');
+      <!-- escucha donde hace click en la página, ve en qué botón ha hecho click (event delegation) -->
+      document.addEventListener("click", function (e) {
+        const btnDelete = e.target.closest(".btn-danger[data-id]");
         if (btnDelete) {
           e.preventDefault();
-          juegoIdEliminar = btnDelete.getAttribute('data-id');
+          juegoIdEliminar = btnDelete.getAttribute("data-id");
           modalEliminar.show();
           return;
         }
 
-        const btnToggle = e.target.closest('.btn-toggle[data-id]');
+        const btnToggle = e.target.closest(".btn-toggle[data-id]");
         if (btnToggle) {
           e.preventDefault();
-          const id = btnToggle.getAttribute('data-id');
+          const id = btnToggle.getAttribute("data-id");
 
-          fetch(`/juegos/${id}/toggle`, { method: 'PATCH' })
-            .then(r => r.json())
-            .then(data => {
+          fetch(`/juegos/${id}/toggle`, { method: "PATCH" })
+            .then((r) => r.json())
+            .then((data) => {
               if (data.ok) window.location.reload();
-              else alert(data.error || 'Error al cambiar estado');
+              else alert(data.error || "Error al cambiar estado");
             })
-            .catch(() => alert('Error al cambiar estado'));
+            .catch(() => alert("Error al cambiar estado"));
         }
       });
 
-      document.getElementById('btnConfirmarEliminar').addEventListener('click', async function() {
-        if (!juegoIdEliminar) return;
+      document
+        .getElementById("btnConfirmarEliminar")
+        .addEventListener("click", async function () {
+          if (!juegoIdEliminar) return;
 
-        try {
-          const response = await fetch(`/juegos/${juegoIdEliminar}`, { method: 'DELETE' });
-          if (response.ok) {
-            modalEliminar.hide();
-            window.location.reload();
-          } else {
-            alert('Error al eliminar el videojuego');
+          try {
+            const response = await fetch(`/juegos/${juegoIdEliminar}`, {
+              method: "DELETE",
+            });
+            if (response.ok) {
+              modalEliminar.hide();
+              window.location.reload();
+            } else {
+              alert("Error al eliminar el videojuego");
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            alert("Error al eliminar el videojuego");
           }
-        } catch (error) {
-          console.error('Error:', error);
-          alert('Error al eliminar el videojuego');
-        }
-      });
+        });
     </script>
   </body>
 </html>

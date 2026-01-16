@@ -4,14 +4,22 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Optional, List, Dict, Any
+from pathlib import Path
 import mysql.connector
 
-from app.database import get_connection  # si tu database.py está dentro de app/
+from app.database import get_connection
+
+# ---------- PATHS ABSOLUTOS ----------
+BASE_DIR = Path(__file__).resolve().parent  # carpeta app/
 
 app = FastAPI(title="GameInventory")
 
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+app.mount(
+    "/static",
+    StaticFiles(directory=BASE_DIR / "static"),
+    name="static"
+)
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 # ---------- DB helpers ----------
@@ -85,7 +93,8 @@ def update_juego(juego_id: int, codigo, titulo, plataforma, genero, precio, stoc
     cur = conn.cursor()
     cur.execute("""
         UPDATE juego
-        SET codigo=%s, titulo=%s, plataforma=%s, genero=%s, precio=%s, stock=%s, estado=%s
+        SET codigo=%s, titulo=%s, plataforma=%s, genero=%s,
+            precio=%s, stock=%s, estado=%s
         WHERE id=%s
     """, (codigo, titulo, plataforma, genero, precio, stock, estado, juego_id))
     conn.commit()
@@ -93,18 +102,17 @@ def update_juego(juego_id: int, codigo, titulo, plataforma, genero, precio, stoc
     conn.close()
 
 
-def soft_delete_juego(juego_id: int) -> None:
+def hard_delete_juego(juego_id: int) -> None:
+    """Borrado REAL (elimina la fila de la tabla)."""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE juego SET estado = 0 WHERE id = %s", (juego_id,))
+    cur.execute("DELETE FROM juego WHERE id = %s", (juego_id,))
     conn.commit()
     cur.close()
     conn.close()
 
 
 # ---------- RUTAS ----------
-
-# LISTADO (solo activos)
 @app.get("/", response_class=HTMLResponse)
 def get_index(request: Request):
     juegos = fetch_all_juegos(only_activos=True)
@@ -114,7 +122,6 @@ def get_index(request: Request):
     )
 
 
-# LISTADO INACTIVOS (para recuperar los “desaparecidos”)
 @app.get("/juegos/inactivos", response_class=HTMLResponse)
 def get_inactivos(request: Request):
     juegos = fetch_inactivos()
@@ -124,7 +131,6 @@ def get_inactivos(request: Request):
     )
 
 
-# (Opcional) LISTADO TODOS
 @app.get("/juegos/todos", response_class=HTMLResponse)
 def get_todos(request: Request):
     juegos = fetch_all_juegos(only_activos=False)
@@ -134,7 +140,6 @@ def get_todos(request: Request):
     )
 
 
-# FORM NUEVO
 @app.get("/juegos/nuevo", response_class=HTMLResponse)
 def get_juego_nuevo(request: Request):
     return templates.TemplateResponse(
@@ -143,7 +148,6 @@ def get_juego_nuevo(request: Request):
     )
 
 
-# CREAR
 @app.post("/juegos/nuevo", response_class=HTMLResponse)
 def post_juego_nuevo(
     request: Request,
@@ -157,8 +161,8 @@ def post_juego_nuevo(
 ):
     titulo = titulo.strip()
     plataforma = plataforma.strip()
-    codigo = (codigo.strip() if codigo else None)
-    genero = (genero.strip() if genero else None)
+    codigo = codigo.strip() if codigo else None
+    genero = genero.strip() if genero else None
 
     if not titulo or not plataforma:
         return templates.TemplateResponse(
@@ -166,20 +170,16 @@ def post_juego_nuevo(
             {
                 "request": request,
                 "modo": "nuevo",
-                "juego": {"codigo": codigo, "titulo": titulo, "plataforma": plataforma, "genero": genero, "precio": precio, "stock": stock, "estado": estado},
+                "juego": {
+                    "codigo": codigo,
+                    "titulo": titulo,
+                    "plataforma": plataforma,
+                    "genero": genero,
+                    "precio": precio,
+                    "stock": stock,
+                    "estado": estado
+                },
                 "error": "Título y plataforma son obligatorios."
-            },
-            status_code=400
-        )
-
-    if precio < 0 or stock < 0 or estado not in (0, 1):
-        return templates.TemplateResponse(
-            "pages/juego_form.html",
-            {
-                "request": request,
-                "modo": "nuevo",
-                "juego": {"codigo": codigo, "titulo": titulo, "plataforma": plataforma, "genero": genero, "precio": precio, "stock": stock, "estado": estado},
-                "error": "Datos inválidos: precio/stock no pueden ser negativos; estado debe ser 0 o 1."
             },
             status_code=400
         )
@@ -195,7 +195,15 @@ def post_juego_nuevo(
             {
                 "request": request,
                 "modo": "nuevo",
-                "juego": {"codigo": codigo, "titulo": titulo, "plataforma": plataforma, "genero": genero, "precio": precio, "stock": stock, "estado": estado},
+                "juego": {
+                    "codigo": codigo,
+                    "titulo": titulo,
+                    "plataforma": plataforma,
+                    "genero": genero,
+                    "precio": precio,
+                    "stock": stock,
+                    "estado": estado
+                },
                 "error": f"Error al guardar: {msg}"
             },
             status_code=400
@@ -204,7 +212,6 @@ def post_juego_nuevo(
     return RedirectResponse(url="/", status_code=303)
 
 
-# FORM EDITAR
 @app.get("/juegos/editar/{juego_id}", response_class=HTMLResponse)
 def get_juego_editar(request: Request, juego_id: int):
     juego = fetch_juego_by_id(juego_id)
@@ -217,7 +224,6 @@ def get_juego_editar(request: Request, juego_id: int):
     )
 
 
-# ACTUALIZAR
 @app.post("/juegos/editar/{juego_id}", response_class=HTMLResponse)
 def post_juego_editar(
     request: Request,
@@ -234,10 +240,10 @@ def post_juego_editar(
     if not juego:
         raise HTTPException(status_code=404, detail="Juego no encontrado")
 
+    codigo = codigo.strip() if codigo else None
+    genero = genero.strip() if genero else None
     titulo = titulo.strip()
     plataforma = plataforma.strip()
-    codigo = (codigo.strip() if codigo else None)
-    genero = (genero.strip() if genero else None)
 
     if not titulo or not plataforma:
         return templates.TemplateResponse(
@@ -245,20 +251,17 @@ def post_juego_editar(
             {
                 "request": request,
                 "modo": "editar",
-                "juego": {**juego, "codigo": codigo, "titulo": titulo, "plataforma": plataforma, "genero": genero, "precio": precio, "stock": stock, "estado": estado},
+                "juego": {
+                    **juego,
+                    "codigo": codigo,
+                    "titulo": titulo,
+                    "plataforma": plataforma,
+                    "genero": genero,
+                    "precio": precio,
+                    "stock": stock,
+                    "estado": estado
+                },
                 "error": "Título y plataforma son obligatorios."
-            },
-            status_code=400
-        )
-
-    if precio < 0 or stock < 0 or estado not in (0, 1):
-        return templates.TemplateResponse(
-            "pages/juego_form.html",
-            {
-                "request": request,
-                "modo": "editar",
-                "juego": {**juego, "codigo": codigo, "titulo": titulo, "plataforma": plataforma, "genero": genero, "precio": precio, "stock": stock, "estado": estado},
-                "error": "Datos inválidos: precio/stock no pueden ser negativos; estado debe ser 0 o 1."
             },
             status_code=400
         )
@@ -274,7 +277,16 @@ def post_juego_editar(
             {
                 "request": request,
                 "modo": "editar",
-                "juego": {**juego, "codigo": codigo, "titulo": titulo, "plataforma": plataforma, "genero": genero, "precio": precio, "stock": stock, "estado": estado},
+                "juego": {
+                    **juego,
+                    "codigo": codigo,
+                    "titulo": titulo,
+                    "plataforma": plataforma,
+                    "genero": genero,
+                    "precio": precio,
+                    "stock": stock,
+                    "estado": estado
+                },
                 "error": f"Error al actualizar: {msg}"
             },
             status_code=400
@@ -283,18 +295,22 @@ def post_juego_editar(
     return RedirectResponse(url="/", status_code=303)
 
 
-# DELETE LÓGICO (modal)
+# DELETE REAL (elimina la fila definitivamente)
 @app.delete("/juegos/{juego_id}")
 def delete_juego(juego_id: int):
     juego = fetch_juego_by_id(juego_id)
     if not juego:
         return JSONResponse({"ok": False, "error": "Juego no encontrado"}, status_code=404)
 
-    soft_delete_juego(juego_id)
+    try:
+        hard_delete_juego(juego_id)
+    except mysql.connector.Error as e:
+        return JSONResponse({"ok": False, "error": f"Error al eliminar: {e}"}, status_code=400)
+
     return JSONResponse({"ok": True})
 
 
-# TOGGLE estado (activar/desactivar)
+# Toggle sigue existiendo para activar/desactivar (pero ojo: si borras, ya no hay registro)
 @app.patch("/juegos/{juego_id}/toggle")
 def toggle_estado(juego_id: int):
     conn = get_connection()
@@ -308,12 +324,9 @@ def toggle_estado(juego_id: int):
         return JSONResponse({"ok": False, "error": "Juego no encontrado"}, status_code=404)
 
     nuevo_estado = 0 if int(row["estado"]) == 1 else 1
-
-    cur2 = conn.cursor()
-    cur2.execute("UPDATE juego SET estado = %s WHERE id = %s", (nuevo_estado, juego_id))
+    cur.execute("UPDATE juego SET estado = %s WHERE id = %s", (nuevo_estado, juego_id))
     conn.commit()
 
-    cur2.close()
     cur.close()
     conn.close()
     return JSONResponse({"ok": True, "estado": nuevo_estado})
